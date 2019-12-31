@@ -8,10 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import sys
 import pandas as pd
-from datetime import datetime
+import datetime
 import numpy as np
-from matplotlib.ticker import FixedLocator, FixedFormatter
-
 
 def plural(n):
     if(n>1):
@@ -42,17 +40,15 @@ if __name__ == '__main__':
     df = xls_file.parse(sheetName)
     #print("Execution Starts")
     #print(df)
-    #table_list = df.Table.unique()
-    if 1==1:
-        tdf = df 
+    table_list = df.Table.unique()
+    for table in table_list:
+        tdf = df[df.Table == table] 
         i=0
         #print(table)
         while(i<NumberofDays):
             print(str(Day-i))
             tdf1 = tdf[tdf.Day == (Day-i) ]
-            dt1 = [str(dt1).replace("T"," ") for dt1 in tdf1['TIME']]
-            curList=[datetime.strptime(d,"%Y-%m-%d %H:%M:%S") for d in dt1]
-            print(curList)
+            curList=[d.strftime("%H:%M") for d in tdf1['STARTTIME']]
             print("I value: "+str(i))
             if(i==0):
                 temptdf=tdf1
@@ -63,53 +59,33 @@ if __name__ == '__main__':
                 while(j<NumberofDays):
                     print("Looping for "+str(j))
                     tdf2 = tdf[tdf.Day == (Day-j)]
-                    dt2 = [str(dt2).replace("T"," ") for dt2 in tdf1['TIME']]
-                    prevList = [datetime.strptime(d,"%Y-%m-%d %H:%M:%S") for d in dt2]
+                    prevList = [d.strftime("%H:%M") for d in tdf2['STARTTIME']]
                     fullList=fullList+prevList
-                    print(curList)
+                    #print(fullList)
                     j=j+1
                 x=list(set(fullList))
                 x.sort()
                 y=[None] * len(x)
-            print(fullList)
+
             if(i>0):  
-                plt.plot(curList,tdf1['SOURCE LATENCY'].tolist(),linestyle='dashed',label = "SOURCE LATENCY "+ "Day "+str(Day-i))
-                plt.plot(curList,tdf1['TARGET LATENCY'].tolist(),linestyle='dashed',label = "TARGET LATENCY "+ "Day "+str(Day-i))
-                plt.plot(curList,tdf1['HANDLING LATENCY'].tolist(),linestyle='dashed',label = "HANDLING LATENCY "+ "Day "+str(Day-i))
+                plt.plot(curList,tdf1['ISERV_HYPER_DELTA'].tolist(),linestyle='dashed',label = str('\u0394')+" HS   "+ "Day "+str(Day-i))
+                plt.plot(curList,tdf1['ISERV_CRNTZ_DELTA'].tolist(),linestyle='dashed',label = str('\u0394')+" CRNTZ "+ "Day "+str(Day-i))
             else:
                 fig, ax = plt.subplots()
                 plt.plot(x,y)
-                #spacing(fig,ax,len(fullList))
-                plt.plot(curList,tdf1['SOURCE LATENCY'].tolist(),label = "SOURCE LATENCY "+ "Day "+str(Day))
-                plt.plot(curList,tdf1['TARGET LATENCY'].tolist(),label = "TARGET LATENCY "+ "Day "+str(Day))
-                plt.plot(curList,tdf1['HANDLING LATENCY'].tolist(),label = "HANDLING LATENCY "+ "Day "+str(Day))
+                spacing(fig,ax,len(fullList))
+                plt.plot(curList,tdf1['ISERV_HYPER_DELTA'].tolist(),label = str('\u0394')+" HS   "+ "Day "+str(Day))
+                plt.plot(curList,tdf1['ISERV_CRNTZ_DELTA'].tolist(),label = str('\u0394')+" CRNTZ "+ "Day "+str(Day))
             i=i+1
         #for n, label in enumerate(ax.xaxis.get_ticklabels()):      
         plt.subplots_adjust(bottom=0.2)
         plt.xticks(rotation=90)
-        plotTitle=" LATENCY Graph for Day "+str(Day)+"["+str(report_date[0])[:10]+"] for "+str(NumberofDays)+" Day"+plural(NumberofDays)
+        plotTitle=table+" Delta Graph for Day "+str(Day)+"["+str(report_date[0])[:10]+"] for "+str(NumberofDays)+" Day"+plural(NumberofDays)
         plt.title(plotTitle)
-        #ax.set_xticks(ax.get_xticks()[::])
-        #plt.set_xticks(curList, minor=True)
-        #ax.set_xlim(curList[0], curList[-1])
-#        curlist1=[]
-#        for i in 
-#        x_formatter = FixedFormatter(curList)
-#        x_locator = FixedLocator(curList)
-#        ax.xaxis.set_major_formatter(x_formatter)
-#        ax.xaxis.set_major_locator(x_locator)
-        #plt.figure(figsize=(4, 3), dpi=70)
-        ax = plt.gca()
-        ticks_to_use = curList[::100]
-        labels = [ i.strftime("%m-%d %H:%M") for i in ticks_to_use ]
-        ax.set_xticks(ticks_to_use)
-        ax.set_xticklabels(labels)
-        #plt.gcf().autofmt_xdate()
-        plt.xlabel('x - axis - Start Time (Not to Scale)') 
+        plt.xlabel('x - axis - Start Time in '+TZ+ ' (Not to Scale)') 
         # naming the y axis 
-        plt.ylabel('y - axis - LATENCY (seconds) (Not to Scale)') 
+        plt.ylabel('y - axis - Count Delta (Not to Scale)') 
         plt.legend(loc='upper right')
         #plt.legend()
-        plt.savefig("C:\Demo\Validation_Tool\plots\Output\plot_"+plotTitle+".png",dpi=1000, bbox_inches='tight')
-        plt.show()
+        plt.savefig("C:\Demo\Validation_Tool\Output\plot_"+plotTitle+".png",dpi=300, bbox_inches='tight')
         plt.close('all')
